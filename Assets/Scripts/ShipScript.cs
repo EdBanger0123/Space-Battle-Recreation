@@ -38,7 +38,13 @@ public class ShipScript : MonoBehaviour
     public bool pursueEnabled;
     public Vector3 pursueTargetPos;
 
+    public GameObject enemyShipsGo, shotGO;
 
+    float shotTime;
+
+    public int enemyCount, camChoice = 0;
+
+    bool hasShot;
 
     //public Path path;
 
@@ -55,7 +61,8 @@ public class ShipScript : MonoBehaviour
 
     public void Start()
     {
-
+        shotTime = 0.5f;
+        enemyCount = 2;
     }
 
     void Update()
@@ -76,8 +83,31 @@ public class ShipScript : MonoBehaviour
             transform.LookAt(transform.position + velocity, tempUp);
             //transform.forward = velocity;
             velocity -= (damping * velocity * Time.deltaTime);
+        }
 
+        if(Vector3.Distance(transform.position, path.waypoints[4]) < 1f)
+        {
+            enemyShipsGo.SetActive(true);
+        }
 
+        if (Vector3.Distance(transform.position, path.waypoints[camChoice]) < 5f)
+        {
+            if(camChoice < GameObject.Find("Camera Positions").GetComponent<CameraScript>().cameraPos.Length - 1)
+            {
+                camChoice++;
+            }
+            
+            GameObject.Find("Camera Positions").GetComponent<CameraScript>().ChangeCam(camChoice);
+        }
+
+        
+
+        if (Vector3.Distance(transform.position, path.waypoints[12]) < 5f && hasShot == false)
+        {
+            StartCoroutine("Shoot");
+            hasShot = true;
+            Debug.Log("ship is shoot");
+            
         }
     }
 
@@ -85,18 +115,23 @@ public class ShipScript : MonoBehaviour
     {
         Vector3 nextWaypoint = path.NextWaypoint();
 
-        if (!path.looped && path.IsLast())
+
+        if (Vector3.Distance(transform.position, nextWaypoint) < waypointDistance)
         {
-            return Arrive(nextWaypoint);
+            path.AdvanceToNext();
+
+
+
+        }
+        return Seek(nextWaypoint);
+        /*if (!path.looped && path.IsLast())
+        {
+            return null;
         }
         else
         {
-            if (Vector3.Distance(transform.position, nextWaypoint) < waypointDistance)
-            {
-                path.AdvanceToNext();
-            }
-            return Seek(nextWaypoint);
-        }
+            
+        }*/
     }
 
     public Vector3 Calculate()
@@ -106,6 +141,7 @@ public class ShipScript : MonoBehaviour
         {
             path.AdvanceToNext();
         }
+        
         return nextWaypoint;
 
         /*if (!path.looped && path.IsLast())
@@ -118,7 +154,7 @@ public class ShipScript : MonoBehaviour
         }*/
     }
 
-    Vector3 Arrive(Vector3 target)
+    /*Vector3 Arrive(Vector3 target)
     {
         Vector3 toTarget = target - transform.position;
         float dist = toTarget.magnitude;
@@ -128,7 +164,9 @@ public class ShipScript : MonoBehaviour
         Vector3 desired = (toTarget / dist) * clamped;
 
         return desired - velocity;
-    }
+
+        
+    }*/
 
     Vector3 Seek(Vector3 target)
     {
@@ -141,14 +179,14 @@ public class ShipScript : MonoBehaviour
     public Vector3 CalculateForce()
     {
         Vector3 force = Vector3.zero;
-        if (seekEnabled)
+        /*if (seekEnabled)
         {
             force += Seek(target);
-        }
-        if (arriveEnabled)
+        }*/
+        /*if (arriveEnabled)
         {
             force += Arrive(target);
-        }
+        }*/
         /*if (playerSteeringEnabled)
         {
             force += PlayerSteering();
@@ -165,6 +203,20 @@ public class ShipScript : MonoBehaviour
         }*/
 
         return force;
+    }
+
+    IEnumerator Shoot()
+    {
+        Debug.Log("shooting");
+        Instantiate(shotGO, this.transform.position, this.transform.rotation);
+        
+        yield return new WaitForSeconds(shotTime);
+
+        if (enemyCount >= 0)
+        {
+            enemyCount--;
+            StartCoroutine("Shoot");
+        }
     }
 
 }

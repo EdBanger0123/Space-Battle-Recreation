@@ -6,28 +6,76 @@ public class ShotScript : MonoBehaviour
 {
     Rigidbody bRb;
 
-    public Transform normandy; 
+    public Transform normandy, enemyShips;
+
+    int enemyCount;
+
+    public Transform target;
+
+    public GameObject explosionGO;
+
+
+    private void Awake()
+    {
+        bRb = GetComponent<Rigidbody>();
+        //transform.rotation = new Quaternion(0, 90, 90, 1);
+    }
 
     private void Start()
     {
         normandy = GameObject.Find("Normandy").transform;
-        bRb = GetComponent<Rigidbody>();
+        enemyShips = GameObject.Find("Small Enemies").transform;
+
+        if (this.gameObject.tag == "ShipShot")
+        {
+            target = enemyShips.GetChild(GameObject.Find("Normandy").GetComponent<ShipNavigation>().enemyCount);
+        } else
+        {
+            target = normandy;
+        }
+
+        if(target == normandy)
+        {
+            transform.LookAt(target);
+            StartCoroutine("End");
+        }
 
         
-        transform.LookAt(normandy);
+    }
 
-        bRb.AddForce(transform.forward * 1000f);
+    private void FixedUpdate()
+    {
+        if(target != normandy)
+        {
+            transform.LookAt(target);
+        }
 
-        StartCoroutine("End");
 
+        bRb.AddForce(transform.forward * 10f, ForceMode.Impulse);
+        bRb.velocity = Vector3.ClampMagnitude(bRb.velocity, 10f);
     }
 
     IEnumerator End()
     {
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(2f);
 
         Destroy(this.gameObject);
     }
 
+
+    private void OnTriggerEnter(Collider collision)
+    {
+        if(collision.gameObject.transform.parent.tag == "Enemy")
+        {
+            if(target != normandy)
+            {
+                Instantiate(explosionGO, collision.gameObject.transform.position, collision.gameObject.transform.rotation);
+                Destroy(collision.gameObject);
+                Destroy(this.gameObject);
+            }
+            
+
+        }
+    }
 
 }
