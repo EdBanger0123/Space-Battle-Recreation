@@ -27,10 +27,12 @@ public class ShipNavigation : MonoBehaviour
     public float banking = 0.1f;
     public float damping = 0.1f;
 
-    public GameObject enemyShipsGo, shotGO, trailGO, explosionGO;
+    public GameObject enemyShipsGo, shotGO, trailGO, explosionGO, collectorGO;
 
     float shotTime;
 
+    public AudioSource normandyAudio;
+    [SerializeField] AudioClip laserShot, bigExplosion;
 
     public int enemyCount, camChoice = 0;
 
@@ -51,6 +53,7 @@ public class ShipNavigation : MonoBehaviour
 
     public void Start()
     {
+        normandyAudio = GetComponent<AudioSource>();
         shotTime = 0.5f;
         enemyCount = 2;
     }
@@ -163,6 +166,11 @@ public class ShipNavigation : MonoBehaviour
     IEnumerator Shoot()
     {
         Debug.Log("shooting");
+
+        normandyAudio.clip = laserShot;
+        normandyAudio.Play();
+
+
         Instantiate(shotGO, this.transform.position, transform.rotation);
 
         yield return new WaitForSeconds(shotTime);
@@ -178,6 +186,9 @@ public class ShipNavigation : MonoBehaviour
     IEnumerator ShipExplosion()
     {
         yield return new WaitForSeconds(2f);
+
+        //explosionGO.transform.parent.GetComponent<AudioSource>().clip = bigExplosion;
+        collectorGO.GetComponent<AudioSource>().enabled = true;
 
         explosionGO.SetActive(true);
 
